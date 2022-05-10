@@ -108,8 +108,10 @@ public:
 	void     AddTail(const T& x)           { bv.AddTail(new T(x)); }
 	T&       AddHead(T *newt)              { bv.AddHead(newt); return *newt; }
 	T&       AddTail(T *newt)              { bv.AddTail(newt); return *newt; }
-	template <class TT> TT& CreateHead()   { TT *q = new TT; bv.AddHead(q); return *q; }
-	template <class TT> TT& CreateTail()   { TT *q = new TT; bv.AddTail(q); return *q; }
+	template <class TT, class... Args>
+	TT& CreateHead(Args&&... args)         { TT *q = new TT(std::forward<Args>(args)...); bv.AddHead(q); return *q; }
+	template <class TT, class... Args>
+	TT& CreateTail(Args&&... args)         { TT *q = new TT(std::forward<Args>(args)...); bv.AddTail(q); return *q; }
 	T&       AddHead(One<T>&& one)         { ASSERT(one); return AddHead(one.Detach()); }
 	T&       AddTail(One<T>&& one)         { ASSERT(one); return AddTail(one.Detach()); }
 	T&       Head()                        { return *(T *) bv.Head(); }
