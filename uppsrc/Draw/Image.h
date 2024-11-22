@@ -61,7 +61,6 @@ String      PackRLE(const RGBA *s, int len);
 
 inline int  Grayscale(int r, int g, int b) { return (77 * r + 151 * g + 28 * b) >> 8; }
 inline int  Grayscale(const RGBA& c)       { return Grayscale(c.r, c.g, c.b); }
-inline byte Saturate255(int x)             { return byte(~(x >> 24) & (x | (-(x >> 8) >> 24)) & 0xff); }
 
 class  Image;
 
@@ -315,7 +314,7 @@ class Iml {
 public:
 	void   Reset();
 	int    GetCount() const                  { return map.GetCount(); }
-	String GetId(int i)                      { return map.GetKey(i); }
+	String GetId(int i) const                { return map.GetKey(i); }
 	Image  Get(int i);
 	int    Find(const String& id) const      { return map.Find(id); }
 	void   Set(int i, const Image& img);

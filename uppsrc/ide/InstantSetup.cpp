@@ -161,10 +161,10 @@ void InstantSetup()
 			bmSet(bm, "BUILDER", "CLANG");
 			bmSet(bm, "COMPILER", x64 ? "" : "i686-w64-mingw32-c++");
 			bmSet(bm, "COMMON_OPTIONS", "");
-			bmSet(bm, "COMMON_CPP_OPTIONS", "");
+			bmSet(bm, "COMMON_CPP_OPTIONS", "-std=c++17");
 			bmSet(bm, "COMMON_C_OPTIONS", "");
 			bmSet(bm, "COMMON_LINK", "");
-			bmSet(bm, "COMMON_FLAGS", "");
+			bmSet(bm, "COMMON_FLAGS", x64 ? "" : "CPU32");
 			bmSet(bm, "DEBUG_INFO", "2");
 			bmSet(bm, "DEBUG_BLITZ", "1");
 			bmSet(bm, "DEBUG_LINKMODE", "0");
@@ -218,7 +218,7 @@ void InstantSetup()
 	enum { VS_2015, VS_2017, BT_2017, VS_2019, VSP_2019, BT_2019, VS_2022, VSP_2022, BT_2022 };
 	DirFinder df;
 
-	for(int version = VS_2015; version <= BT_2022; version++)
+	for(int version = VS_2019; version <= BT_2022; version++)
 		for(int x64 = 0; x64 < 2; x64++) {
 			String x86method = decode(version, VS_2015, "MSVS15",
 			                                   VS_2017, "MSVS17", BT_2017, "MSBT17",
@@ -330,8 +330,12 @@ void InstantSetup()
 
 				String& myinc = incs.At(ii++);
 				if(IsNull(myinc) || ToLower(myinc).Find("mysql") >= 0)
-					myinc = GetExeDirFile(x64 ? "bin/mysql/include" : "bin/mysql/include");
-
+					myinc = GetExeDirFile("bin/mysql/include");
+				
+				String& llvminc = incs.At(ii++);
+				if(IsNull(llvminc) || ToLower(llvminc).Find("llvm") >= 0)
+					llvminc = GetExeDirFile("bin/llvm");
+				
 				libs.At(0) = vc + (ver17 ? (x64 ? "/lib/x64" : "/lib/x86") : (x64 ? "/lib/amd64" : "/lib"));
 				ii = 1;
 				if(lib.GetCount()) {
@@ -356,14 +360,18 @@ void InstantSetup()
 				String& mylib = libs.At(ii++);
 				if(IsNull(mylib) || ToLower(mylib).Find("mysql") >= 0)
 					mylib = GetExeDirFile(x64 ? "bin/mysql/lib64" : "bin/mysql/lib32");
+				
+				String& llvmlib = libs.At(ii++);
+				if(IsNull(llvmlib) || ToLower(llvmlib).Find("llvm") >= 0)
+					llvmlib = GetExeDirFile("bin/llvm");
 
 				bm.GetAdd("BUILDER") = builder;
 				bmSet(bm, "COMPILER", "");
 				bmSet(bm, "COMMON_OPTIONS", x64 ? "/bigobj -D_CRT_SECURE_NO_WARNINGS"
 				                                : "/bigobj /D_ATL_XP_TARGETING -D_CRT_SECURE_NO_WARNINGS");
-				bmSet(bm, "COMMON_CPP_OPTIONS", "");
+				bmSet(bm, "COMMON_CPP_OPTIONS", "/std:c++17");
 				bmSet(bm, "COMMON_C_OPTIONS", "");
-				bmSet(bm, "COMMON_FLAGS", "");
+				bmSet(bm, "COMMON_FLAGS", x64 ? "" : "CPU32");
 				bmSet(bm, "DEBUG_INFO", "2");
 				bmSet(bm, "DEBUG_BLITZ", "1");
 				bmSet(bm, "DEBUG_LINKMODE", "0");
