@@ -63,7 +63,14 @@ void Ide::File(Bar& menu)
 	if(findarg(ToLower(fn), ".cpp", ".c", ".cxx", ".h", ".cc", ".hpp") >= 0)
 		fn = ".cpp";
 	fn = "scratchpad" + fn;
-	menu.AddMenu(AK_SCRATCHPAD, CtrlImg::open(), [=] { EditFile(ConfigFile(fn)); })
+	menu.AddMenu(AK_SCRATCHPAD, CtrlImg::open(), [=] {
+			String path = ConfigFile(fn);
+			if(editfile == path && scratch_back.GetCount())
+				path = scratch_back;
+			else
+				scratch_back = editfile;
+			EditFile(path);
+		})
 	    .Text(fn)
 		.Help("Open scratchpad file");
 	menu.AddMenu(AK_SAVEFILE, CtrlImg::save(), THISBACK(DoSaveFile))
@@ -601,12 +608,8 @@ void Ide::FilePropertiesMenu(Bar& menu)
 	});
 	if(editfile_repo) {
 		String txt = String("Show ") + (editfile_repo == SVN_DIR ? "svn" : "git") + " history of ";
-		menu.AddMenu(candiff, AK_SVNDIFF, IdeImg::SvnDiff(), [=] {
-			if(!IsNull(editfile))
-				RunRepoDiff(editfile);
-		}).Text(txt + "file..");
 		if(editfile_repo == GIT_DIR) {
-			String origin = Sys("git -C " + GetFileFolder(editfile) + " remote get-url origin");
+			String origin = HostSys("git -C " + GetFileFolder(editfile) + " remote get-url origin");
 			if(origin.StartsWith("https://github.com/")) {
 				origin.TrimEnd("\n");
 				origin.TrimEnd("\r");
@@ -620,6 +623,10 @@ void Ide::FilePropertiesMenu(Bar& menu)
 				});
 			}
 		}
+		menu.AddMenu(candiff, AK_SVNDIFF, IdeImg::SvnDiff(), [=] {
+			if(!IsNull(editfile))
+				RunRepoDiff(editfile, editor.GetCursorLine());
+		}).Text(txt + "file..");
 		if(editfile.GetCount()) {
 			String mine;
 			String theirs;

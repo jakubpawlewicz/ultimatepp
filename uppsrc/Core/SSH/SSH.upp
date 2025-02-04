@@ -13,7 +13,7 @@ uses(WIN32 | NOSO) plugin/z;
 
 library(POSIX) "crypto ssl z";
 
-library(WIN32) "ssl crypto";
+library(WIN32) "ssl crypto crypt32";
 
 library(WIN32) "usp10 gdi32 ws2_32";
 
@@ -42,9 +42,9 @@ file
 	Hosts.h,
 	Hosts.cpp,
 	"Library Files" readonly separator,
-	libssh2upp.c,
-	libssh2\libssh2_config.h,
-	libssh2/Copying,
+	libssh2/libssh2_config.h,
+	libssh2upp.ext,
+	libssh2/COPYING,
 	Docs readonly separator,
 	src.tpp,
 	Info readonly separator,
@@ -52,4 +52,3 @@ file
 	Copying,
 	Todo,
 	Issues;
-

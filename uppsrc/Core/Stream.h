@@ -1,7 +1,3 @@
-#ifdef  _DEBUG
-#define NEWBLOCKSTREAM
-#endif
-
 enum {
 	STRM_ERROR   =  0x20,
 	STRM_READ    =  0x10,
@@ -234,6 +230,9 @@ public:
 	Stream&   operator/(unsigned int& i);
 	Stream&   operator/(long& i);
 	Stream&   operator/(unsigned long& i);
+	
+	Stream&   Serialize64(long& d)           { uint64 m = d; *this % m; d = (long) m; return *this; }
+	Stream&   Serialize64(unsigned long& d)  { uint64 m = d; *this % m; d = (unsigned long) m; return *this; }
 
 	void      Magic(dword magic = 0x7d674d7b);
 
@@ -388,6 +387,7 @@ public:
 	virtual ~BlockStream();
 
 protected:
+	void     Reset();
 	void     OpenInit(dword mode, int64 file_size);
 };
 

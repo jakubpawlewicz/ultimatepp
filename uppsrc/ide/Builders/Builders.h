@@ -35,6 +35,7 @@ struct CppBuilder : Builder {
 	bool                   Cp(const String& cmd, const String& package, bool& error);
 	bool                   Cd(const String& cmd);
 	Vector<String>         CustomStep(const String& path, const String& package, bool& error);
+	void                   DoRc(Vector<String>& sfile, Vector<String>& soptions, const Package& pkg, const String& package);
 
 	String                 Includes(const char *sep, const String& package, const Package& pkg);
 	void                   SaveBuildInfo(const String& package);
@@ -78,7 +79,7 @@ struct GccBuilder : CppBuilder {
 
 	virtual String CompilerName() const;
 	String CmdLine(const String& package, const Package& pkg);
-	void BinaryToObject(String objfile, CParser& binscript, String basedir, const String& package, const Package& pkg);
+	void   CToObject(String fo, String objfile, const String& package, const Package& pkg);
 	void   CocoaAppBundle();
 	bool   CreateLib(const String& product, const Vector<String>& obj,
 	                 const Vector<String>& all_uses, const Vector<String>& all_libraries,

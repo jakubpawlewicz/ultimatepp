@@ -35,6 +35,10 @@ bool RichEdit::Key(dword key, int count)
 		return true;
 	if(IsReadOnly())
 		return false;
+	if(key == (K_CTRL_KEY|K_KEYUP) && show_zoom) {
+		show_zoom = false;
+		Refresh();
+	}
 	switch(key) {
 	case K_CTRL_BACKSPACE:
 		if(RemoveSelection(true)) return true;
@@ -55,7 +59,8 @@ bool RichEdit::Key(dword key, int count)
 		if(RemoveBullet(true)) break;
 		if(cursor <= 0 || RemoveSpecial(cursor, cursor - 1, true))
 			return true;
-		anchor = --cursor;
+		Move(cursor - 1);
+		anchor = cursor;
 		begtabsel = false;
 		if(cursor > 0) {
 			RichPos p = text.GetRichPos(cursor - 1);
@@ -64,12 +69,15 @@ bool RichEdit::Key(dword key, int count)
 				break;
 			}
 		}
+		SetLastCharFormat();
 		Remove(cursor, 1);
 		break;
 	case K_DELETE:
 		if(RemoveSelection()) return true;
-		if(cursor < text.GetLength() && !RemoveSpecial(cursor, cursor + 1, false))
+		if(cursor < text.GetLength() && !RemoveSpecial(cursor, cursor + 1, false)) {
+			SetLastCharFormat();
 			Remove(cursor, 1, true);
+		}
 		break;
 	case K_INSERT:
 		overwrite = !overwrite;
@@ -107,6 +115,7 @@ bool RichEdit::Key(dword key, int count)
 			RichText::FormatInfo f = formatinfo;
 			InsertLine();
 			formatinfo = f;
+			formatinfo.link.Clear();
 			ShowFormat();
 			FinishNF();
 		}
@@ -210,6 +219,7 @@ bool RichEdit::Key(dword key, int count)
 			Filter(txt);
 			Insert(cursor, txt, true);
 			Move(cursor + count, false);
+			SetLastCharFormat(f);
 			break;
 		}
 		return false;
