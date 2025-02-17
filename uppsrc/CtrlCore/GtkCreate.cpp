@@ -28,6 +28,7 @@ void Ctrl::Create(Ctrl *owner, bool popup)
 	w.ctrl = this;
 	w.gtk = top->window;
 	w.gdk = nullptr;
+	w.drawing_area = nullptr;
 
 	TopWindow *tw = dynamic_cast<TopWindow *>(this);
 	GdkWindowTypeHint type_hint;
@@ -42,24 +43,33 @@ void Ctrl::Create(Ctrl *owner, bool popup)
 		                  : GDK_WINDOW_TYPE_HINT_NORMAL;
 	}
 	gtk_window_set_type_hint(gtk(), type_hint);
+
+	Rect r = GetRect();
 	
 	top->csd.Create(type_hint);
-	if (top->csd.IsEnabled()) {
-		if (findarg(type_hint, GDK_WINDOW_TYPE_HINT_POPUP_MENU) >= 0) {
-			top->header = gtk_drawing_area_new();
+	if(top->csd.IsEnabled()) {
+		top->header = gtk_header_bar_new();
+		if (findarg(type_hint, GDK_WINDOW_TYPE_HINT_POPUP_MENU) >= 0)
 			gtk_widget_set_size_request(top->header, 1, 1);
-			gtk_window_set_titlebar(gtk(), top->header);
-		} else {
-			top->header = gtk_header_bar_new();
+		else
 			gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(top->header), TRUE);
-			gtk_window_set_titlebar(gtk(), top->header);
-		}
+
+		gtk_window_set_titlebar(gtk(), top->header);
+		gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(top->header), false);
 		
 		top->drawing_area = gtk_drawing_area_new();
 		gtk_widget_set_can_focus(top->drawing_area, TRUE);
-	} else {
+
+		r.left -= top->csd.LeftMargin();
+		r.right += top->csd.RightMargin();
+		r.top -= top->csd.TopMargin();
+		r.bottom += top->csd.BottomMargin();
+	}
+	else {
 		top->drawing_area = top->window;
 	}
+
+	w.drawing_area = top->drawing_area;
 	
 	top->cursor_id = -1;
 
@@ -71,9 +81,6 @@ void Ctrl::Create(Ctrl *owner, bool popup)
 	if(tw && findarg(hint, GDK_WINDOW_TYPE_HINT_NORMAL, GDK_WINDOW_TYPE_HINT_DIALOG, GDK_WINDOW_TYPE_HINT_UTILITY) >= 0)
 		tw->SyncSizeHints();
 
-	Rect r = GetRect();
-	
-	// TODO: Normalize
 	gtk_window_set_default_size(gtk(), LSC(r.GetWidth()), LSC(r.GetHeight()));
 	gtk_window_move(gtk(), LSC(r.left), LSC(r.top));
 	gtk_window_resize(gtk(), LSC(r.GetWidth()), LSC(r.GetHeight()));

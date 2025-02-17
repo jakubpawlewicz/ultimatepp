@@ -221,6 +221,9 @@ One<Builder> MakeBuild::CreateBuilder(Host *host)
 		b->common_link = bm.Get("COMMON_LINK", "");
 		b->debug_link = bm.Get("DEBUG_LINK", "");
 		b->release_link = bm.Get("RELEASE_LINK", "");
+
+		b->debug_cuda = bm.Get("DEBUG_CUDA", "");
+		b->release_cuda = bm.Get("RELEASE_CUDA", "");
 		
 		b->main_conf = !!main_conf.GetCount();
 		b->allow_pch = bm.Get("ALLOW_PRECOMPILED_HEADERS", "") == "1";
@@ -433,7 +436,6 @@ Vector<String> MakeBuild::GetAllUses(const Workspace& wspc, int f,
 { // Gathers all uses, including subpackages, to support SO builds
 	String package = wspc[f];
 	Index<String> all_uses;
-	bool warn = true;
 	int n = 0;
 	while(f >= 0) {
 		const Package& p = wspc.package[f];
@@ -442,10 +444,6 @@ Vector<String> MakeBuild::GetAllUses(const Workspace& wspc, int f,
 			if(MatchWhen(p.uses[fu].when, config.GetKeys())) {
 				if(p.uses[fu].text != package)
 					all_uses.FindAdd(p.uses[fu].text);
-				else if(warn) {
-					PutConsole(Format("%s: circular 'uses' chain", package));
-					warn = false;
-				}
 			}
 		}
 		f = -1;

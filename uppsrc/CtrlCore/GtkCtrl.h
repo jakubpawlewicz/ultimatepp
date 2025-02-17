@@ -82,6 +82,7 @@ _DBG_
 		int          id;
 		GtkWidget   *gtk;
 		GdkWindow   *gdk;
+		GtkWidget   *drawing_area;
 		Ptr<Ctrl>    ctrl;
 		Vector<Rect> invalid; // areas invalidated to be processed at next opportunity
 	};
@@ -208,6 +209,8 @@ public:
 	static bool      IsWayland();
 	static bool      IsRunningOnWayland();
 	static bool      IsXWayland()              { return IsX11() && IsRunningOnWayland(); }
+	
+	static void      UseWayland();
 	
 	static Point     CurrentMousePos;
 	static guint     CurrentState;
