@@ -64,6 +64,8 @@ void Ctrl::Create(Ctrl *owner, bool popup)
 		r.right += top->csd.RightMargin();
 		r.top -= top->csd.TopMargin();
 		r.bottom += top->csd.BottomMargin();
+
+		g_signal_connect(top->window, "delete-event", G_CALLBACK(GtkEvent), (gpointer)(uintptr_t)top->id);
 	}
 	else {
 		top->drawing_area = top->window;
@@ -83,7 +85,8 @@ void Ctrl::Create(Ctrl *owner, bool popup)
 
 	gtk_window_set_default_size(gtk(), LSC(r.GetWidth()), LSC(r.GetHeight()));
 	gtk_window_move(gtk(), LSC(r.left), LSC(r.top));
-	gtk_window_resize(gtk(), LSC(r.GetWidth()), LSC(r.GetHeight()));
+	gtk_window_resize(gtk(), LSC(r.GetWidth()) - top->csd.ExtraWidth(),
+	                  LSC(r.GetHeight()) - top->csd.ExtraHeight());
 		
 	if (top->header) {
 		gtk_container_add(GTK_CONTAINER(top->window), top->drawing_area);
@@ -151,6 +154,7 @@ void Ctrl::WndDestroy()
 		top->im_context = nullptr;
 	}
 	gtk_widget_destroy(top->window);
+	top->window = nullptr;
 	isopen = false;
 	popup = false;
 	DeleteTop();
@@ -159,7 +163,7 @@ void Ctrl::WndDestroy()
 	if(q >= 0)
 		wins.Remove(q);
 	if(owner) {
-		if(owner->utop->csd.IsEnabled()) {
+		if(owner->top && owner->utop && owner->utop->csd.IsEnabled()) {
 			// TODO: This fix the problem with keyboard when going back to original window, but
 			// the previous control is not being focused like it should be.
 			gtk_window_set_focus(owner->gtk(), owner->utop->drawing_area);

@@ -92,8 +92,8 @@ public:
 	byte       *PutPtr(int size = 1) { ASSERT(size > 0); if(ptr + size <= wrlim) { byte *p = ptr; ptr += size; return p; }; return NULL; }
 	const byte *GetSzPtr(int& size)  { Term(); size = int(rdlim - ptr); byte *p = ptr; ptr += size; return p; }
 
-	void      Put(const void *data, int size)  { ASSERT(size >= 0); if(size) { if(ptr + size <= wrlim) { memcpy8(ptr, data, size); ptr += size; } else _Put(data, size); } }
-	int       Get(void *data, int size)        { ASSERT(size >= 0); if(ptr + size <= rdlim) { memcpy8(data, ptr, size); ptr += size; return size; } return _Get(data, size); }
+	void      Put(const void *data, int size)  { ASSERT(size >= 0); if(size) { if(ptr && ptr + size <= wrlim) { memcpy8(ptr, data, size); ptr += size; } else _Put(data, size); } }
+	int       Get(void *data, int size)        { ASSERT(size >= 0); if(ptr && ptr + size <= rdlim) { memcpy8(data, ptr, size); ptr += size; return size; } return _Get(data, size); }
 
 	void      Put(const String& s)   { Put((const char *) s, s.GetLength()); }
 	String    Get(int size);
@@ -560,7 +560,6 @@ bool   SaveStream(Stream& out, const String& data);
 
 int64 CopyStream(Stream& dest, Stream& src, int64 count = INT64_MAX);
 
-#ifndef PLATFORM_WINCE
 void    CoutUTF8();
 Stream& Cout();
 Stream& Cerr();
@@ -568,7 +567,6 @@ String  ReadStdIn();
 String  ReadSecret();
 void    EnableEcho(bool b = true);
 void    DisableEcho();
-#endif
 
 Stream& NilStream();
 

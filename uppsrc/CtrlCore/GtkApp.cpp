@@ -100,10 +100,14 @@ void Ctrl::UseWayland()
 bool InitGtkApp(int argc, char **argv, const char **envptr)
 {
 	LLOG(rmsecs() << " InitGtkApp");
+
+	XInitThreads(); // otherwise there are errors despite GuiLock
+	// this has to be called before gtk_init_check, otherwise it crashes with xfce (at least
+	// some versions)
 	
 #if GTK_CHECK_VERSION(3, 10, 0)
 	String backends = "x11,wayland";
-#ifdef flagWAYLAND
+#ifdef flagWAYLAND // Sets GTK to prefer Wayland backend
 	backends = "wayland,x11";
 #endif
 	if(FileExists(ConfigFile("USE_WAYLAND")) || sUseWayland)
@@ -115,8 +119,6 @@ bool InitGtkApp(int argc, char **argv, const char **envptr)
 		Cerr() << t_("Failed to initialized GTK app!") << "\n";
 		return false;
 	}
-	if(Ctrl::IsX11())
-		XInitThreads(); // otherwise there are errors despite GuiLock
 
 	EnterGuiMutex();
 	
