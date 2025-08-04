@@ -12,5 +12,9 @@ file
 	InitExit.cpp,
 	Socket.cpp,
 	P7S.cpp,
-	SSL.icpp;
+	AES.cpp,
+	Buffer.hpp,
+	SSL.icpp,
+	Docs readonly separator,
+	src.tpp;
 

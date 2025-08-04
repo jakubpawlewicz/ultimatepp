@@ -143,10 +143,10 @@ void Ide::AssistEdit(Bar& menu)
 
 void Ide::InsertAdvanced(Bar& bar)
 {
-	LTIMESTOP("InsertAdvanced");
+	LTIMESTOP("Miscellaneous");
 	bool b = !editor.IsReadOnly();
 	AssistEdit(bar);
-	bar.Add(b, "Advanced", THISBACK(EditSpecial));
+	bar.Add(b, "Miscellaneous", THISBACK(EditSpecial));
 }
 
 void Ide::Reformat(Bar& bar)
@@ -170,6 +170,8 @@ void Ide::EditSpecial(Bar& menu)
 		.Help("Convert all tabs to spaces");
 	menu.Add(b, AK_LINEENDINGS, THISBACK(EditMakeLineEnds))
 		.Help("Remove tabs and spaces at line endings");
+	menu.Add(b && editor.IsSelection(), AK_CONVERTOOVERRIDE, [=] { editor.ConvertToOverrides(); })
+		.Help("Convert virtual function declarations to override (removes virtual, adds override)");
 	menu.Add(b, AK_TRANSLATESTRING, THISBACK(TranslateString))
 		.Help("Mark the current selection as translated string");
 	menu.Add(b, AK_SWAPCHARS, THISBACK(SwapChars))
@@ -501,9 +503,9 @@ void Ide::Project(Bar& menu)
 	{
 		mainconfiglist.Enable(idestate == EDITING);
 		buildmode.Enable(idestate == EDITING);
-		menu.Add(mainconfiglist, HorzLayoutZoom(180));
+		menu.Add(mainconfiglist, HorzLayoutZoom(140));
 		menu.Gap(4);
-		menu.Add(buildmode, HorzLayoutZoom(180));
+		menu.Add(buildmode, HorzLayoutZoom(140));
 		menu.Separator();
 	}
 	if(!IsEditorMode()) {
@@ -531,14 +533,13 @@ void Ide::Project(Bar& menu)
 	if(!IsEditorMode()) {
 		menu.MenuSeparator();
 		if(repo_dirs) {
-			String pp = GetActivePackagePath();
+			String pp = GetActivePackageDir();
 			menu.AddMenu(FileExists(pp) && editfile_repo,
 			             (editfile_repo == SVN_DIR ? "Show svn history of " : "Show git history of ") + GetFileName(pp),
 			             IdeImg::SvnDiff(), [=] {
 				if(FileExists(pp))
 					RunRepoDiff(pp);
 			});
-			pp = GetFileFolder(pp);
 			menu.Add("Invoke gitk at " + pp, [=] {
 				Host h;
 				CreateHost(h, false, false);
@@ -931,7 +932,7 @@ void Ide::BrowseMenu(Bar& menu)
 	}
 
 	if(AssistDiagnostics) {
-		menu.Separator();
+		menu.MenuSeparator();
 		menu.Add("Dump and show whole current index", [=] {
 			String path = CacheFile("index_" + AsString(Random()) + AsString(Random()));
 			DumpIndex(path);
@@ -948,6 +949,9 @@ void Ide::BrowseMenu(Bar& menu)
 			String p = CacheFile("CurrentContext" + AsString(Random()) + AsString(Random()) + ".txt");
 			Upp::SaveFile(p, editor.CurrentContext().content);
 			EditFile(p);
+		});
+		menu.Add("Current include path", [=] {
+			PromptOK("\1" + Join(Split(GetCurrentIncludePath(),';'), "\n"));
 		});
 	}
 }
@@ -1065,6 +1069,7 @@ void Ide::SetBar()
 {
 	SetMenuBar();
 	SetToolBar();
+	RefreshLayout();
 }
 
 void Ide::SetMenuBar()

@@ -11,7 +11,7 @@ void InvalidatePackageInfo(const String& name)
 
 PackageInfo GetPackageInfo(const String& name)
 {
-	String path = PackagePath(name);
+	String path = PackageFile(name);
 	Time tm = FileGetTime(path);
 	int q = sPi.Find(name);
 	if(q >= 0) {
@@ -176,8 +176,9 @@ void NestEditorDlg::Sync()
 	remove.Enable(b);
 	up.Enable(b);
 	down.Enable(b);
-	for(int i = 0; i < nests.GetCount(); i++)
-		nests.SetDisplay(i, 0, i == 0 ? BoldDisplay() : StdDisplay());
+	if(firstbold)
+		for(int i = 0; i < nests.GetCount(); i++)
+			nests.SetDisplay(i, 0, i == 0 ? BoldDisplay() : StdDisplay());
 }
 
 bool BaseSetup(String& vars) { return BaseSetupDlg().Run(vars); }
@@ -198,6 +199,16 @@ BaseSetupDlg::BaseSetupDlg()
 
 	upp << [=] { OnUpp(); };
 	
+	setup_includes << [=] {
+		NestEditorDlg ndlg;
+		ndlg.firstbold = false;
+		ndlg.Title("Includes");
+		ndlg.Set(~include);
+		if(!ndlg.ExecuteOK())
+			return;
+		include <<= ndlg.Get();
+	};
+	
 	output_sel.Tip("Select output directory...");
 	upv_sel.Tip("Select UppHub directory...");
 	DirSelect(output, output_sel);
@@ -208,12 +219,15 @@ BaseSetupDlg::BaseSetupDlg()
 
 bool BaseSetupDlg::Run(String& vars)
 {
-	upp     <<= GetVar("UPP");
-	output  <<= GetUppOut();
-	upv     <<= GetVar("UPPHUB");
-	all     <<= GetVar("_all") == "1";
-	base    <<= vars;
+	upp      <<= GetVar("UPP");
+	output   <<= GetUppOut();
+	include  <<= GetVar("INCLUDE");
+	upv      <<= GetVar("UPPHUB");
+	all      <<= GetVar("_all") == "1";
+	base     <<= vars;
 	new_base = IsNull(vars);
+
+	Sync();
 	
 	while(TopWindow::Run() == IDOK)
 	{
@@ -231,6 +245,7 @@ bool BaseSetupDlg::Run(String& vars)
 		}
 		SetVar("UPP", ~upp);
 		SetVar("OUTPUT", ~output);
+		SetVar("INCLUDE", ~include);
 		SetVar("UPPHUB", ~upv);
 		SetVar("_all", all ? "1" : "0");
 		Vector<String> paths = SplitDirs(upp.GetText().ToString());

@@ -338,6 +338,8 @@ class JsonIO;
 
 #include "CharSet.h"
 
+#include "CharFilter.h"
+
 #include "Path.h"
 
 #include "SplitMerge.h"
@@ -391,6 +393,8 @@ class JsonIO;
 #include "CoSort.h"
 
 #include "LocalProcess.h"
+
+#include "BinUndoRedo.h"
 
 #include "Inet.h"
 

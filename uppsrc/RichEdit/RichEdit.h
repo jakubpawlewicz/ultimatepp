@@ -316,6 +316,8 @@ private:
 	bool                     allow_dark_content = false;
 	
 	bool                     show_zoom = false;
+	
+	Color                    override_paper = Null;
 
 	static int fh[];
 
@@ -477,7 +479,6 @@ private:
 	RichPara::CharFormat last_format;
 	Image      last_format_img;
 
-	Rect       GetTextRect() const;
 	Size       GetZoomedPage() const;
 	int        GetPosY(PageY py) const;
 	void       GetPagePoint(Point p, PageY& py, int& x);
@@ -516,7 +517,7 @@ private:
 
 	void       Limit(int& pos, int& count);
 	bool       InvalidRange(int c1, int c2);
-	void       NextUndo()                 { undoserial += incundoserial; incundoserial = false; }
+	void       NextUndo()                 { undoserial += incundoserial; incundoserial = false; useraction = true; }
 	void       AddUndo(One<UndoRec>&& ur);
 
 	void       BeginRulerTrack();
@@ -644,6 +645,7 @@ private:
 	void     ZoomClip(RichText& text) const;
 	
 	void     InsertImage();
+	void     InsertDiagram();
 
 	RichObject Adjust(RichObject o);
 
@@ -730,6 +732,8 @@ public:
 	int                  GetChar(int pos) const    { return text[pos]; }
 	int                  operator[](int pos) const { return text[pos]; }
 
+	Rect   GetTextRect() const;
+
 	void   Undo();
 	void   Redo();
 
@@ -786,6 +790,7 @@ public:
 	void   PastePlainTextTool(Bar& bar, dword key = K_CTRL_V|K_SHIFT);
 	void   ObjectTool(Bar& bar, dword key = 0);
 	void   LoadImageTool(Bar& bar, dword key = 0);
+	void   InsertDiagramTool(Bar& bar, dword key = 0);
 	void   FindReplaceTool(Bar& bar, dword key = K_CTRL_F);
 
 	void   InsertTableTool(Bar& bar, dword key = K_CTRL_F12);
@@ -854,6 +859,7 @@ public:
 	RichEdit&       PixelMode();
 	RichEdit&       DarkContent(bool b = true);
 	RichEdit&       AllowDarkContent(bool b = true);
+	RichEdit&       OverridePaper(Color p);
 
 	struct UndoInfo {
 		int              undoserial;
@@ -909,6 +915,8 @@ public:
 };
 
 void AppendClipboard(RichText&& txt);
+
+#include "DiagramEditor.h"
 
 }
 

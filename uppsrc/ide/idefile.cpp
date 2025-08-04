@@ -142,10 +142,8 @@ void Ide::ChangeFileCharset(const String& name, Package& p, byte charset)
 			p.file[i].charset = charset;
 			sv = true;
 		}
-	if(sv) {
-		String pp = PackagePathA(name);
-		p.Save(pp);
-	}
+	if(sv)
+		p.Save(PackageFileA(name));
 }
 
 void Ide::FileProperties()
@@ -524,8 +522,6 @@ void Ide::EditFile0(const String& path, byte charset, int spellcheck_comments, c
 	    FileIsBinary(path) || editashex.Find(path) >= 0))
 		designer.Create<FileHexView>().Open(path);
 	
-	ManageDisplayVisibility();
-	
 	if(designer) {
 		editpane.Add(designer->DesignerCtrl().SizePos());
 		designer->DesignerCtrl().SetFocus();
@@ -860,7 +856,7 @@ void Ide::EditFile(const String& p)
 
 void Ide::CheckFileUpdate()
 {
-	if(editfile.IsEmpty() || !IsForeground() || designer) return;
+	if(editfile.IsEmpty() || !IsForeground() || designer || !FileExists(editfile)) return;
 	FileTime tm = GetFileTime(editfile);
 	if(tm == edittime) return;
 	edittime = tm;

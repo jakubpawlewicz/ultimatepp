@@ -108,6 +108,7 @@ String ClangCursorInfo::Id()
 {
 	if(!hasid) {
 		String m, s;
+		const char *p;
 		int q = 0;
 		switch(cursorKind) {
 		case CXCursor_StructDecl:
@@ -125,14 +126,16 @@ String ClangCursorInfo::Id()
 		case CXCursor_CXXMethod:
 #ifdef UBUNTU2204_WORKAROUND
 			s = RawId();
-			m = CleanupId(s);
-			if(s.StartsWith("template ")) { // template class method already seems to contain some scope, sometimes
-				int p = m.Find('(');
-				for(;;) { // remove any scope
-					int q = m.Find("::");
-					if(q < 0 || q >= p)
-						break;
-					m = m.Mid(q + 2);
+			p = s;
+			while(*p == '&' || *p == '*') // fix CleanupId("&Accel(int (*filter)(int))") -> Accel(int(*filter)())
+				p++;
+			m = CleanupId(p);
+			{ // remove any scope
+				int q = m.Find('(');
+				if(q >= 0) {
+					q = m.ReverseFind("::", q);
+					if(q >= 0)
+						m = m.Mid(q + 2);
 				}
 			}
 			while(findarg(m[q], ':', '*', '&', '(', ')', ' ') >= 0)
@@ -310,13 +313,14 @@ bool ClangVisitor::ProcessNode(CXCursor cursor)
 		r.type = ci.Type();
 		r.pos = loc.pos;
 		r.id = id;
-		r.pretty = kind == CXCursor_MacroDefinition ? r.name
-	               : CleanupPretty(FetchString(clang_getCursorPrettyPrinted(cursor, pp_pretty)));
+		r.pretty0 = kind == CXCursor_MacroDefinition ? r.name
+	                : FetchString(clang_getCursorPrettyPrinted(cursor, pp_pretty));
+		r.pretty = kind == CXCursor_MacroDefinition ? r.name : CleanupPretty(r.pretty0);
 		r.definition = clang_isCursorDefinition(cursor);
 		r.nspace = ci.Nspace();
 		r.bases = ci.Bases();
 		r.isvirtual = kind == CXCursor_CXXMethod && clang_CXXMethod_isVirtual(cursor);
-		r.isstatic = clang_Cursor_getStorageClass(cursor) == CX_SC_Static;
+		r.isstatic = (IsFunction(r.kind) || IsVariable(r.kind)) && clang_Cursor_getStorageClass(cursor) == CX_SC_Static;
 
 		if(findarg(r.kind, CXCursor_Constructor, CXCursor_Destructor) >= 0) {
 			int q = r.id.Find('(');

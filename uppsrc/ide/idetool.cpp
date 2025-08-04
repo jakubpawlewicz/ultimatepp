@@ -32,7 +32,7 @@ void Ide::GotoPos(String path, Point pos)
 
 String PosFn(const String& pkg, const String& n)
 {
-	return String() << Filter(pkg, [](int c) { return c == '\\' ? '/' : c; }) << '/' << n;
+	return String() << Filter(IsExternalMode() ? GetFileName(pkg) : pkg, [](int c) { return c == '\\' ? '/' : c; }) << '/' << n;
 }
 
 void Ide::CopyPosition()
@@ -506,7 +506,7 @@ void Ide::DoPatchDiff()
 		dir.FindAdd(d[i]);
 	const Workspace& wspc = IdeWorkspace();
 	for(int i = 0; i < wspc.GetCount(); i++)
-		dir.FindAdd(GetFileFolder(PackagePath(wspc[i])));
+		dir.FindAdd(PackageDirectory(wspc[i]));
 	static PatchDiff dlg;
 	dlg.diff.WhenLeftLine = THISBACK1(GotoDirDiffLeft, &dlg);
 	if(!dlg.IsOpen()) {

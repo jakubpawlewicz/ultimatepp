@@ -2,11 +2,11 @@
 #define RICHTEXT_H
 
 #include <Draw/Draw.h>
-#include <Draw/Draw.h>
+#include <Painter/Painter.h>
 #include <plugin/png/png.h>
 
 namespace Upp {
-
+	
 #define IMAGECLASS RichTextImg
 #define IMAGEFILE <RichText/RichText.iml>
 #include <Draw/iml_header.h>
@@ -42,6 +42,8 @@ struct Zoom {
 
 	friend int operator/(int x, Zoom z)  { return z.m ? iscale(x, z.d, z.m) : 0; }
 };
+
+#include "Diagram.h"
 
 inline bool IsNull(Zoom z) { return (z.m | z.d) == 0; }
 
@@ -134,6 +136,12 @@ struct PageDraw {
 class RichObject;
 class Bar;
 
+struct RichObjectPaintInfo {
+	Color ink = Black();
+	bool  dark = false;
+	void *context = nullptr;
+};
+
 struct RichObjectType {
 	virtual String GetTypeName(const Value& v) const = 0;
 	virtual String GetCreateName() const;
@@ -149,11 +157,12 @@ struct RichObjectType {
 	virtual Size   GetDefaultSize(const Value& data, Size maxsize, void *context) const;
 	virtual Size   GetPhysicalSize(const Value& data, void *context) const;
 	virtual Size   GetPixelSize(const Value& data, void *context) const;
-	virtual void   Paint(const Value& data, Draw& w, Size sz, void *context) const;
-	virtual Image  ToImage(int64 serial_id, const Value& data, Size sz, void *context) const;
 	virtual void   Menu(Bar& bar, RichObject& ex, void *context) const;
 	virtual void   DefaultAction(RichObject& ex, void *context) const;
 	virtual String GetLink(const Value& data, Point pt, Size sz, void *context) const;
+
+	virtual void   Paint(const Value& data, Draw& w, Size sz, const RichObjectPaintInfo& pi) const;
+	virtual Image  ToImage(int64 serial_id, const Value& data, Size sz, const RichObjectPaintInfo& pi) const;
 	
 	Size           StdDefaultSize(const Value& data, Size maxsize, void *context) const;
 
@@ -164,11 +173,8 @@ protected:
 	virtual Size   GetDefaultSize(const Value& data, Size maxsize) const;
 	virtual Size   GetPhysicalSize(const Value& data) const;
 	virtual Size   GetPixelSize(const Value& data) const;
-	virtual void   Paint(const Value& data, Draw& w, Size sz) const;
-	virtual Image  ToImage(int64 serial_id, const Value& data, Size sz) const;
 	virtual void   Menu(Bar& bar, RichObject& ex) const;
 	virtual void   DefaultAction(RichObject& ex) const;
-	virtual String GetLink(const Value& data, Point pt, Size sz) const;
 };
 
 class RichObject : Moveable<RichObject> {
@@ -197,8 +203,8 @@ public:
 	void   SetSize(int cx, int cy)               { size = Size(cx, cy); }
 	void   SetSize(Size sz)                      { SetSize(sz.cx, sz.cy); }
 	Size   GetSize() const                       { return size; }
-	void   Paint(Draw& w, Size sz, void *context = NULL) const;
-	Image  ToImage(Size sz, void *context = NULL) const;
+	void   Paint(Draw& w, Size sz, const RichObjectPaintInfo& pi = RichObjectPaintInfo()) const;
+	Image  ToImage(Size sz, const RichObjectPaintInfo& pi = RichObjectPaintInfo()) const;
 	Size   GetPhysicalSize() const               { return physical_size; }
 	Size   GetPixelSize() const                  { return pixel_size; }
 	Size   GetDefaultSize(Size maxsize, void *context = NULL) const { return type ? type->GetDefaultSize(data, maxsize, context) : physical_size; }
@@ -290,7 +296,6 @@ struct PaintInfo {
 	void   *context;
 	bool    showlabels;
 	bool    shrink_oversized_objects;
-	bool    single_line = false; // draw just one line (special usecase)
 	void  (*DrawSelection)(Draw& w, int x, int y, int cx, int cy);
 	
 	Color   ResolveInk(Color ink) const;

@@ -331,7 +331,7 @@ void RichEdit::PasteTool(Bar& bar, dword key)
 
 void RichEdit::PastePlainTextTool(Bar& bar, dword key)
 {
-	bar.Add(!IsReadOnly() && IsClipboardAvailableText(), t_("Paste without formating"), [=] {
+	bar.Add(!IsReadOnly() && IsClipboardAvailableText(), t_("Paste without formatting"), [=] {
 		useraction = true;
 		PasteText(AsRichText(ReadClipboardUnicodeText(), GetFormatInfo()));
 	})
@@ -350,6 +350,11 @@ void RichEdit::ObjectTool(Bar& bar, dword key)
 void RichEdit::LoadImageTool(Bar& bar, dword key)
 {
 	bar.Add(!IsReadOnly(), t_("Insert image from file.."), CtrlImg::open(), THISBACK(InsertImage));
+}
+
+void RichEdit::InsertDiagramTool(Bar& bar, dword key)
+{
+	bar.Add(!IsReadOnly(), t_("Insert diagram.."), DiagramImg::Diagram(), [=] { InsertDiagram(); });
 }
 
 void RichEdit::PrintTool(Bar& bar, dword key)

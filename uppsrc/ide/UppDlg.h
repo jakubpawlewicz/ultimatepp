@@ -102,6 +102,8 @@ int FilterPackageName(int c);
 struct NestEditorDlg : public WithNestEditorLayout<TopWindow> {
     NestEditorDlg();
     
+    bool firstbold = true;
+    
 	void   Set(const String& nests);
 	String Get() const;
 
@@ -153,6 +155,7 @@ struct SelectPackageDlg : public WithSelectPackageLayout<TopWindow> {
 	ArrayCtrl         alist;
 	ProgressIndicator progress;
 	StatusBar         lists_status;
+	bool              alist_external = false;
 	
 	Vector<String> nest_list;
 
@@ -207,7 +210,6 @@ struct SelectPackageDlg : public WithSelectPackageLayout<TopWindow> {
 	void           OnBase();
 	void           OnFilter();
 
-	void           ListCursor();
 	void           ChangeDescription();
 	
 	String         LRUFilePath();
@@ -273,6 +275,9 @@ struct UppList : FileList {
 	                   dword style) const;
 };
 
+void SyncPackage(const String& active, Package& actual);
+void SyncEmptyPackage(const String& p);
+
 struct WorkspaceWork {
 	static    Font ListFont();
 
@@ -311,6 +316,7 @@ struct WorkspaceWork {
 	bool         organizer;
 	bool         showtime;
 	bool         sort;
+	bool         noemptyload = false; // in external mode, do not load files if package is empty (todo: refactor whole thing)
 	
 	Index<String> errorfiles;
 
@@ -351,7 +357,8 @@ struct WorkspaceWork {
 	void   ShowFile(int pi);
 
 	String         GetActivePackage() const           { return package.GetCurrentName(); }
-	String         GetActivePackagePath() const       { return PackagePath(package.GetCurrentName()); }
+	String         GetActivePackageDir() const        { return PackageDirectory(package.GetCurrentName()); }
+	String         GetActivePackageFile() const       { return PackageFile(package.GetCurrentName()); }
 	String         GetActiveFileName() const;
 	String         GetActiveFilePath() const;
 	void           OpenFileFolder();
@@ -392,6 +399,7 @@ struct WorkspaceWork {
 	void ToggleIncludeable();
 
 	void AddNormalUses();
+	void AddFolderUses();
 	void AddAnyUses();
 	void TogglePackageSpeed();
 
@@ -409,10 +417,10 @@ struct WorkspaceWork {
 
 	void PackageMenu(Bar& bar);
 	void FileMenu(Bar& bar);
-	void SpecialFileMenu(Bar& bar);
 	void InsertSpecialMenu(Bar& menu);
 
-	String PackagePathA(const String& pn);
+	String PackageDirA(const String& pn);
+	String PackageFileA(const String& pn);
 	
 	void SetErrorFiles(const Vector<String>& files);
 
@@ -480,3 +488,5 @@ struct PackageEditor : WorkspaceWork, WithUppLayout<TopWindow> {
 };
 
 void EditPackages(const char *main, const char *startwith, String& cfg);
+
+String SelectExternalPackage(const String& from = Null);

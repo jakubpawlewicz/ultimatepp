@@ -126,9 +126,38 @@ bool RichPara::BreaksPage(const RichContext& rc, const Lines& pl, int i) const
 	return false;
 }
 
+struct EllipseImageMaker : ImageMaker {
+	Size       sz;
+
+	virtual String Key() const;
+	virtual Image  Make() const;
+};
+
+String EllipseImageMaker::Key() const
+{
+	return String((const char *)&sz, sizeof(sz));
+}
+
+Image EllipseImageMaker::Make() const
+{
+	ImagePainter p(sz);
+	p.Clear(RGBAZero());
+	p.DrawEllipse(0, 0, sz.cx, sz.cy, Black());
+	return p;
+}
+
+static Image sEllipseImage(Size sz)
+{
+	EllipseImageMaker m;
+	m.sz = sz;
+	return MakeImage(m);
+}
+
 struct RichObjectImageMaker : ImageMaker {
 	RichObject object;
 	Size       sz;
+	Color      ink;
+	bool       dark = false;
 	void       *context;
 
 	virtual String Key() const;
@@ -141,12 +170,18 @@ String RichObjectImageMaker::Key() const
 	RawCat(b, object.GetSerialId());
 	RawCat(b, sz);
 	RawCat(b, context);
+	RawCat(b, ink);
+	RawCat(b, dark);
 	return String(b);
 }
 
 Image RichObjectImageMaker::Make() const
 {
-	return object.ToImage(sz, context);
+	RichObjectPaintInfo pi;
+	pi.ink = ink;
+	pi.context = context;
+	pi.dark = dark;
+	return object.ToImage(sz, pi);
 }
 
 void RichPara::DrawRuler(Draw& w, int x, int y, int cx, int cy, Color ink, int style)
@@ -281,11 +316,18 @@ void RichPara::Paint(PageDraw& pw, RichContext rc, const PaintInfo& pi,
 								RichObjectImageMaker im;
 								im.object = o;
 								im.sz = sz;
+								im.ink = (*i)->ink;
+								im.dark = pi.darktheme;
 								im.context = pi.context;
 								draw.DrawImage(0, 0, MakeImagePaintOnly(im));
 							}
-							else
-								o.Paint(draw, sz, pi.context);
+							else {
+								RichObjectPaintInfo oi;
+								oi.ink = (*i)->ink;
+								oi.context = pi.context;
+								oi.dark = pi.darktheme;
+								o.Paint(draw, sz, oi);
+							}
 						draw.End();
 					}
 					i++;
@@ -331,11 +373,20 @@ void RichPara::Paint(PageDraw& pw, RichContext rc, const PaintInfo& pi,
 					draw.DrawRect(r1, pi.ResolvePaper(White()));
 					break;
 				case BULLET_ROUNDWHITE:
-					draw.DrawEllipse(r, pi.ResolveInk(bullet_ink));
-					draw.DrawEllipse(r1, pi.ResolvePaper(White()));
+					if(draw.IsPrinter()) {
+						draw.DrawEllipse(r, pi.ResolveInk(bullet_ink));
+						draw.DrawEllipse(r1, pi.ResolvePaper(White()));
+					}
+					else {
+						draw.DrawImage(r.left, r.top, sEllipseImage(r.GetSize()), pi.ResolveInk(bullet_ink));
+						draw.DrawImage(r1.left, r1.top, sEllipseImage(r1.GetSize()), pi.ResolvePaper(White()));
+					}
 					break;
 				case BULLET_ROUND:
-					draw.DrawEllipse(r, pi.ResolveInk(bullet_ink));
+					if(draw.IsPrinter())
+						draw.DrawEllipse(r, pi.ResolveInk(bullet_ink));
+					else
+						draw.DrawImage(r.left, r.top, sEllipseImage(r.GetSize()), pi.ResolveInk(bullet_ink));
 					break;
 				}
 			}
@@ -375,8 +426,6 @@ void RichPara::Paint(PageDraw& pw, RichContext rc, const PaintInfo& pi,
 				hg++;
 			}
 		rc.py.y += linecy;
-		if(pi.single_line)
-			break;
 	}
 	Size sz = RichTextImg::EndParaChar().GetSize();
 	if(sz.cy < z * lineascent && !IsNull(pi.showcodes))
